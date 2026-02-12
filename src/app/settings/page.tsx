@@ -1,12 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Save, RotateCcw } from 'lucide-react';
 
@@ -100,21 +98,19 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h2 className="text-2xl font-bold">Settings</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="text-2xl font-bold text-slate-800">Settings</h2>
+        <p className="text-sm text-slate-400">
           Configure tank capacities, minimum ROB values, and optimizer parameters
         </p>
       </div>
 
       {/* Tank Capacities */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Tank Capacities (Liters)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="soft-card">
+        <h3 className="section-label mb-4">Tank Capacities (Liters)</h3>
+        <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="cyl-capacity">Cylinder Oil</Label>
+              <Label htmlFor="cyl-capacity" className="text-slate-600">Cylinder Oil</Label>
               <Input
                 id="cyl-capacity"
                 type="number"
@@ -123,7 +119,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="me-capacity">ME System Oil</Label>
+              <Label htmlFor="me-capacity" className="text-slate-600">ME System Oil</Label>
               <Input
                 id="me-capacity"
                 type="number"
@@ -132,7 +128,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="ae-capacity">AE System Oil</Label>
+              <Label htmlFor="ae-capacity" className="text-slate-600">AE System Oil</Label>
               <Input
                 id="ae-capacity"
                 type="number"
@@ -143,7 +139,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-2">
-            <Label>
+            <Label className="text-slate-600">
               Max Fill: {config.tankMaxFillPct}%
             </Label>
             <Slider
@@ -154,18 +150,16 @@ export default function SettingsPage() {
               step={5}
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Minimum ROB */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Minimum ROB</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="soft-card">
+        <h3 className="section-label mb-4">Minimum ROB</h3>
+        <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="me-min-rob">ME System Oil (L, fixed)</Label>
+              <Label htmlFor="me-min-rob" className="text-slate-600">ME System Oil (L, fixed)</Label>
               <Input
                 id="me-min-rob"
                 type="number"
@@ -174,7 +168,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="ae-min-rob">AE System Oil (L, fixed)</Label>
+              <Label htmlFor="ae-min-rob" className="text-slate-600">AE System Oil (L, fixed)</Label>
               <Input
                 id="ae-min-rob"
                 type="number"
@@ -184,7 +178,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cyl-days">
+            <Label htmlFor="cyl-days" className="text-slate-600">
               Cylinder Oil Min ROB Days (avg daily consumption x days)
             </Label>
             <Input
@@ -193,21 +187,19 @@ export default function SettingsPage() {
               value={config.cylinderMinRobDays}
               onChange={(e) => updateField('cylinderMinRobDays', Number(e.target.value))}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="caption">
               Min ROB = last 6 months avg daily consumption x {config.cylinderMinRobDays} days
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Optimizer Parameters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Optimizer Parameters</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="soft-card">
+        <h3 className="section-label mb-4">Optimizer Parameters</h3>
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label>
+            <Label className="text-slate-600">
               Window Size: {config.windowSize} ports
             </Label>
             <Slider
@@ -217,13 +209,13 @@ export default function SettingsPage() {
               max={10}
               step={1}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="caption">
               How many ports to look ahead for price comparison
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label>
+            <Label className="text-slate-600">
               Safety Buffer: {config.safetyBufferPct}%
             </Label>
             <Slider
@@ -233,58 +225,52 @@ export default function SettingsPage() {
               max={25}
               step={1}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="caption">
               Extra consumption buffer added to forecasts
             </p>
           </div>
 
-          <Separator />
+          <div className="border-t border-slate-200/50 my-2" />
 
           <div className="space-y-2">
-            <Label htmlFor="divisor">Price Conversion Divisor (USD/MT to USD/L)</Label>
+            <Label htmlFor="divisor" className="text-slate-600">Price Conversion Divisor (USD/MT to USD/L)</Label>
             <Input
               id="divisor"
               type="number"
               value={config.priceMtToLDivisor}
               onChange={(e) => updateField('priceMtToLDivisor', Number(e.target.value))}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="caption">
               USD/L = USD/MT / {config.priceMtToLDivisor}
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Delivery Charges */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Delivery Charges</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="delivery-charge">Default Charge (USD per bunkering event)</Label>
-            <Input
-              id="delivery-charge"
-              type="number"
-              value={config.deliveryChargeDefault}
-              onChange={(e) => updateField('deliveryChargeDefault', Number(e.target.value))}
-            />
-            <p className="text-xs text-muted-foreground">
-              Fixed cost charged per delivery, regardless of volume ordered
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="soft-card">
+        <h3 className="section-label mb-4">Delivery Charges</h3>
+        <div className="space-y-2">
+          <Label htmlFor="delivery-charge" className="text-slate-600">Default Charge (USD per bunkering event)</Label>
+          <Input
+            id="delivery-charge"
+            type="number"
+            value={config.deliveryChargeDefault}
+            onChange={(e) => updateField('deliveryChargeDefault', Number(e.target.value))}
+          />
+          <p className="caption">
+            Fixed cost charged per delivery, regardless of volume ordered
+          </p>
+        </div>
+      </div>
 
       {/* Minimum Order Quantities */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Minimum Order Quantities</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="soft-card">
+        <h3 className="section-label mb-4">Minimum Order Quantities</h3>
+        <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="min-order-me">ME System Oil (L)</Label>
+              <Label htmlFor="min-order-me" className="text-slate-600">ME System Oil (L)</Label>
               <Input
                 id="min-order-me"
                 type="number"
@@ -293,7 +279,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="min-order-ae">AE System Oil (L)</Label>
+              <Label htmlFor="min-order-ae" className="text-slate-600">AE System Oil (L)</Label>
               <Input
                 id="min-order-ae"
                 type="number"
@@ -302,20 +288,18 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="caption">
             Cylinder Oil: No minimum (consumed continuously)
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Reorder Triggers */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Reorder Triggers</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="soft-card">
+        <h3 className="section-label mb-4">Reorder Triggers</h3>
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label>
+            <Label className="text-slate-600">
               Target Fill: {config.targetFillPct}%
             </Label>
             <Slider
@@ -325,13 +309,13 @@ export default function SettingsPage() {
               max={90}
               step={1}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="caption">
               When ordering, fill tank to this percentage of capacity
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label>
+            <Label className="text-slate-600">
               ROB Trigger Multiplier: {config.robTriggerMultiplier.toFixed(1)}x
             </Label>
             <Slider
@@ -341,13 +325,13 @@ export default function SettingsPage() {
               max={20}
               step={1}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="caption">
               Order urgently when ROB drops below {config.robTriggerMultiplier.toFixed(1)}x minimum ROB
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label>
+            <Label className="text-slate-600">
               Opportunity Discount: {config.opportunityDiscountPct}%
             </Label>
             <Slider
@@ -357,12 +341,12 @@ export default function SettingsPage() {
               max={25}
               step={1}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="caption">
               Buy opportunistically when price is {config.opportunityDiscountPct}%+ below route average
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Actions */}
       <div className="flex items-center gap-3">
@@ -375,7 +359,7 @@ export default function SettingsPage() {
           Reset to Defaults
         </Button>
         {saved && (
-          <span className="text-sm text-maritime-green">Settings saved</span>
+          <span className="text-sm text-emerald-600">Settings saved</span>
         )}
       </div>
     </div>

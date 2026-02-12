@@ -1,6 +1,5 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 
@@ -13,47 +12,41 @@ interface StatCardProps {
   variant?: 'default' | 'success' | 'warning' | 'danger';
 }
 
-const variantStyles = {
-  default: 'text-primary',
-  success: 'text-maritime-green',
-  warning: 'text-maritime-amber',
-  danger: 'text-maritime-red',
+const variantColors = {
+  default: { value: 'text-mw-purple', circle: 'status-circle-info', icon: 'text-mw-purple' },
+  success: { value: 'text-emerald-600', circle: 'status-circle-success', icon: 'text-emerald-500' },
+  warning: { value: 'text-amber-600', circle: 'status-circle-warning', icon: 'text-amber-500' },
+  danger: { value: 'text-red-600', circle: 'status-circle-danger', icon: 'text-red-500' },
 };
 
 export function StatCard({ title, value, subtitle, icon: Icon, trend, variant = 'default' }: StatCardProps) {
+  const colors = variantColors[variant];
+
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              {title}
+    <div className="soft-card">
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <p className="section-label">{title}</p>
+          <p className={cn('metric-sm', colors.value)}>{value}</p>
+          {subtitle && <p className="caption">{subtitle}</p>}
+          {trend && (
+            <p
+              className={cn(
+                'text-xs font-medium',
+                trend.value >= 0 ? 'text-emerald-600' : 'text-red-600'
+              )}
+            >
+              {trend.value >= 0 ? '+' : ''}
+              {trend.value}% {trend.label}
             </p>
-            <p className={cn('text-2xl font-bold', variantStyles[variant])}>
-              {value}
-            </p>
-            {subtitle && (
-              <p className="text-xs text-muted-foreground">{subtitle}</p>
-            )}
-            {trend && (
-              <p
-                className={cn(
-                  'text-xs font-medium',
-                  trend.value >= 0 ? 'text-maritime-green' : 'text-maritime-red'
-                )}
-              >
-                {trend.value >= 0 ? '+' : ''}
-                {trend.value}% {trend.label}
-              </p>
-            )}
-          </div>
-          {Icon && (
-            <div className="rounded-md bg-primary/10 p-2">
-              <Icon className="h-5 w-5 text-primary" />
-            </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+        {Icon && (
+          <div className={colors.circle}>
+            <Icon className={cn('h-5 w-5', colors.icon)} />
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

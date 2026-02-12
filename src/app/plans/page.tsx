@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -18,11 +16,11 @@ import { ClipboardList, Eye } from 'lucide-react';
 import type { PurchasePlan } from '@/lib/optimizer/types';
 import { formatUSD, formatDate } from '@/lib/utils/format';
 
-const statusColors: Record<string, string> = {
-  draft: 'bg-muted text-muted-foreground',
-  submitted: 'bg-maritime-blue/20 text-maritime-blue-light',
-  approved: 'bg-maritime-green/20 text-maritime-green',
-  rejected: 'bg-maritime-red/20 text-maritime-red',
+const statusBadge: Record<string, string> = {
+  draft: 'badge-neutral',
+  submitted: 'badge-info',
+  approved: 'badge-success',
+  rejected: 'badge-danger',
 };
 
 export default function PlansPage() {
@@ -69,116 +67,109 @@ export default function PlansPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Purchase Plans</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-2xl font-bold text-slate-800">Purchase Plans</h2>
+          <p className="text-sm text-slate-400">
             Saved optimization results and approval workflow
           </p>
         </div>
-        <Badge variant="outline" className="gap-1">
+        <span className="badge-info gap-1">
           <ClipboardList className="h-3 w-3" />
           {plans.length} plans
-        </Badge>
+        </span>
       </div>
 
       {plans.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <ClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No purchase plans yet</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Run the optimizer on a vessel to create a plan
-            </p>
-            <Link href="/vessels">
-              <Button className="mt-4" variant="outline">
-                Go to Vessels
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <div className="soft-card flex flex-col items-center justify-center py-12">
+          <ClipboardList className="h-12 w-12 text-slate-300 mb-4" />
+          <p className="text-slate-400">No purchase plans yet</p>
+          <p className="text-sm text-slate-300 mt-1">
+            Run the optimizer on a vessel to create a plan
+          </p>
+          <Link href="/vessels">
+            <Button className="mt-4" variant="outline">
+              Go to Vessels
+            </Button>
+          </Link>
+        </div>
       ) : (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">All Plans</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Vessel</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total Cost</TableHead>
-                  <TableHead className="text-right">Savings</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {plans.map((plan) => (
-                  <TableRow key={plan._id}>
-                    <TableCell className="font-medium">
-                      {plan.vesselName}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={statusColors[plan.status] || ''}
-                      >
-                        {plan.status.toUpperCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatUSD(plan.optimizerOutput.totalCost.total)}
-                    </TableCell>
-                    <TableCell className="text-right text-maritime-green">
-                      {formatUSD(plan.optimizerOutput.savings.total)}
-                    </TableCell>
-                    <TableCell>
-                      {plan.createdAt ? formatDate(String(plan.createdAt)) : '—'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {plan.status === 'draft' && (
+        <div className="soft-card p-0 overflow-hidden">
+          <div className="p-4 pb-2">
+            <h3 className="section-label">All Plans</h3>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow style={{ borderColor: 'rgba(148, 163, 184, 0.15)', background: 'rgba(248, 250, 252, 0.6)' }}>
+                <TableHead className="text-[11px] uppercase tracking-wider text-slate-400">Vessel</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider text-slate-400">Status</TableHead>
+                <TableHead className="text-right text-[11px] uppercase tracking-wider text-slate-400">Total Cost</TableHead>
+                <TableHead className="text-right text-[11px] uppercase tracking-wider text-slate-400">Savings</TableHead>
+                <TableHead className="text-[11px] uppercase tracking-wider text-slate-400">Created</TableHead>
+                <TableHead className="text-right text-[11px] uppercase tracking-wider text-slate-400">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {plans.map((plan) => (
+                <TableRow key={plan._id} className="hover:bg-mw-purple/[0.02]" style={{ borderColor: 'rgba(148, 163, 184, 0.08)' }}>
+                  <TableCell className="font-medium text-slate-700">
+                    {plan.vesselName}
+                  </TableCell>
+                  <TableCell>
+                    <span className={statusBadge[plan.status] || 'badge-neutral'}>
+                      {plan.status.toUpperCase()}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right text-slate-700">
+                    {formatUSD(plan.optimizerOutput.totalCost.total)}
+                  </TableCell>
+                  <TableCell className="text-right text-emerald-600">
+                    {formatUSD(plan.optimizerOutput.savings.total)}
+                  </TableCell>
+                  <TableCell className="text-slate-500">
+                    {plan.createdAt ? formatDate(String(plan.createdAt)) : '\u2014'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {plan.status === 'draft' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleStatusChange(plan._id!, 'submitted')}
+                        >
+                          Submit
+                        </Button>
+                      )}
+                      {plan.status === 'submitted' && (
+                        <>
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleStatusChange(plan._id!, 'submitted')}
+                            className="text-emerald-600"
+                            onClick={() => handleStatusChange(plan._id!, 'approved')}
                           >
-                            Submit
+                            Approve
                           </Button>
-                        )}
-                        {plan.status === 'submitted' && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-maritime-green"
-                              onClick={() => handleStatusChange(plan._id!, 'approved')}
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-maritime-red"
-                              onClick={() => handleStatusChange(plan._id!, 'rejected')}
-                            >
-                              Reject
-                            </Button>
-                          </>
-                        )}
-                        <Link href={`/plans/${plan._id}`}>
-                          <Button size="sm" variant="ghost">
-                            <Eye className="h-4 w-4" />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-500"
+                            onClick={() => handleStatusChange(plan._id!, 'rejected')}
+                          >
+                            Reject
                           </Button>
-                        </Link>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                        </>
+                      )}
+                      <Link href={`/plans/${plan._id}`}>
+                        <Button size="sm" variant="ghost">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

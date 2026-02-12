@@ -11,13 +11,14 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
+import { chartColors, chartConfig } from '@/lib/chart-config';
 import type { PortPlan, OilGradeConfig, OilGradeCategory } from '@/lib/optimizer/types';
 import { formatLiters } from '@/lib/utils/format';
 
 const GRADE_COLORS: Record<OilGradeCategory, string> = {
-  cylinderOil: '#3b82f6',
-  meSystemOil: '#10b981',
-  aeSystemOil: '#f59e0b',
+  cylinderOil: chartColors.primary,
+  meSystemOil: chartColors.quaternary,
+  aeSystemOil: chartColors.secondary,
 };
 
 interface ROBProjectionChartProps {
@@ -41,26 +42,31 @@ export function ROBProjectionChart({ ports, oilGrades }: ROBProjectionChartProps
   return (
     <ResponsiveContainer width="100%" height={400}>
       <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+        <CartesianGrid strokeDasharray={chartConfig.grid.strokeDasharray} stroke={chartConfig.grid.stroke} />
         <XAxis
           dataKey="portName"
-          tick={{ fontSize: 12 }}
+          tick={chartConfig.xAxis.tick}
+          axisLine={chartConfig.xAxis.axisLine}
+          tickLine={chartConfig.xAxis.tickLine}
           angle={-30}
           textAnchor="end"
           height={60}
         />
         <YAxis
-          tick={{ fontSize: 12 }}
+          tick={chartConfig.yAxis.tick}
+          axisLine={chartConfig.yAxis.axisLine}
+          tickLine={chartConfig.yAxis.tickLine}
           tickFormatter={(value: number) => formatLiters(value)}
           width={90}
         />
         <Tooltip
+          contentStyle={chartConfig.tooltip.contentStyle}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           formatter={(value: any, name: any) => {
             return [formatLiters(Number(value)), String(name)];
           }}
         />
-        <Legend />
+        <Legend wrapperStyle={chartConfig.legend.wrapperStyle} />
 
         {oilGrades.map((grade) => {
           const cat = grade.category as OilGradeCategory;
@@ -72,9 +78,9 @@ export function ROBProjectionChart({ ports, oilGrades }: ROBProjectionChartProps
               dataKey={`${cat}_departure`}
               name={`${grade.label} ROB`}
               stroke={color}
-              strokeWidth={2}
-              dot={{ fill: color, r: 4 }}
-              activeDot={{ r: 6 }}
+              strokeWidth={chartConfig.line.strokeWidth}
+              dot={{ fill: color, r: chartConfig.line.dot.r }}
+              activeDot={{ r: chartConfig.line.activeDot.r }}
             />
           );
         })}
@@ -85,13 +91,13 @@ export function ROBProjectionChart({ ports, oilGrades }: ROBProjectionChartProps
             <ReferenceLine
               key={`${cat}_min`}
               y={grade.tankConfig.minRob}
-              stroke="#ef4444"
+              stroke={chartColors.danger}
               strokeDasharray="6 4"
               label={{
                 value: `${grade.label} Min`,
                 position: 'insideTopRight',
                 fontSize: 10,
-                fill: '#ef4444',
+                fill: chartColors.danger,
               }}
             />
           );

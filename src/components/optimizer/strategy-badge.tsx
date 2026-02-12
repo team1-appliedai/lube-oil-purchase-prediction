@@ -1,14 +1,13 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { StrategyName } from '@/lib/optimizer/types';
 
 const strategyStyles: Record<StrategyName, string> = {
-  grid: 'bg-blue-100 text-blue-800 border-blue-200',
-  'cheapest-port': 'bg-green-100 text-green-800 border-green-200',
-  'delivery-aware': 'bg-amber-100 text-amber-800 border-amber-200',
-  consolidated: 'bg-purple-100 text-purple-800 border-purple-200',
+  grid: 'badge-info',
+  'cheapest-port': 'badge-success',
+  'delivery-aware': 'badge-warning',
+  consolidated: 'badge-purple',
 };
 
 const strategyLabels: Record<StrategyName, string> = {
@@ -25,15 +24,14 @@ interface StrategyBadgeProps {
 
 export function StrategyBadge({ strategy, className }: StrategyBadgeProps) {
   return (
-    <Badge
-      variant="outline"
+    <span
       className={cn(
-        'text-[11px] font-semibold border',
+        'text-[11px] font-semibold',
         strategyStyles[strategy],
         className
       )}
     >
       {strategyLabels[strategy]}
-    </Badge>
+    </span>
   );
 }

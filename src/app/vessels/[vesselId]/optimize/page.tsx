@@ -2,7 +2,6 @@
 
 import { use, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -29,7 +28,6 @@ const ALL_STRATEGIES: { value: StrategyName; label: string }[] = [
 export default function OptimizePage({ params }: PageProps) {
   const { vesselId } = use(params);
 
-  // Standard mode state
   const [windowSize, setWindowSize] = useState(5);
   const [safetyBufferPct, setSafetyBufferPct] = useState(10);
   const [targetFillPct, setTargetFillPct] = useState(70);
@@ -42,7 +40,6 @@ export default function OptimizePage({ params }: PageProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Smart mode state
   const [smartResult, setSmartResult] = useState<SmartOptimizerResult | null>(null);
   const [smartOilGrades, setSmartOilGrades] = useState<OilGradeConfig[]>([]);
   const [smartLoading, setSmartLoading] = useState(false);
@@ -154,7 +151,7 @@ export default function OptimizePage({ params }: PageProps) {
   function toggleStrategy(strategy: StrategyName) {
     setEnabledStrategies((prev) => {
       if (prev.includes(strategy)) {
-        if (prev.length <= 1) return prev; // must keep at least 1
+        if (prev.length <= 1) return prev;
         return prev.filter((s) => s !== strategy);
       }
       return [...prev, strategy];
@@ -162,11 +159,11 @@ export default function OptimizePage({ params }: PageProps) {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Purchase Optimizer</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-800">Purchase Optimizer</h1>
+          <p className="text-slate-400">
             Vessel: {vesselId}
           </p>
         </div>
@@ -185,16 +182,14 @@ export default function OptimizePage({ params }: PageProps) {
 
         {/* ==================== STANDARD TAB ==================== */}
         <TabsContent value="standard" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Optimizer Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <div className="soft-card">
+            <h2 className="section-label mb-4">Optimizer Settings</h2>
+            <div className="space-y-6">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Look-ahead Window</label>
-                    <span className="text-sm tabular-nums text-muted-foreground">
+                    <label className="text-sm font-medium text-slate-600">Look-ahead Window</label>
+                    <span className="text-sm tabular-nums text-slate-400">
                       {windowSize} ports
                     </span>
                   </div>
@@ -208,8 +203,8 @@ export default function OptimizePage({ params }: PageProps) {
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Safety Buffer</label>
-                    <span className="text-sm tabular-nums text-muted-foreground">
+                    <label className="text-sm font-medium text-slate-600">Safety Buffer</label>
+                    <span className="text-sm tabular-nums text-slate-400">
                       {safetyBufferPct}%
                     </span>
                   </div>
@@ -223,8 +218,8 @@ export default function OptimizePage({ params }: PageProps) {
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Target Fill</label>
-                    <span className="text-sm tabular-nums text-muted-foreground">
+                    <label className="text-sm font-medium text-slate-600">Target Fill</label>
+                    <span className="text-sm tabular-nums text-slate-400">
                       {targetFillPct}%
                     </span>
                   </div>
@@ -238,8 +233,8 @@ export default function OptimizePage({ params }: PageProps) {
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Opportunity Discount</label>
-                    <span className="text-sm tabular-nums text-muted-foreground">
+                    <label className="text-sm font-medium text-slate-600">Opportunity Discount</label>
+                    <span className="text-sm tabular-nums text-slate-400">
                       {opportunityDiscountPct}%
                     </span>
                   </div>
@@ -253,8 +248,8 @@ export default function OptimizePage({ params }: PageProps) {
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">ROB Trigger</label>
-                    <span className="text-sm tabular-nums text-muted-foreground">
+                    <label className="text-sm font-medium text-slate-600">ROB Trigger</label>
+                    <span className="text-sm tabular-nums text-slate-400">
                       {robTriggerMultiplier.toFixed(1)}x
                     </span>
                   </div>
@@ -267,7 +262,7 @@ export default function OptimizePage({ params }: PageProps) {
                   />
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="delivery-charge" className="text-sm font-medium">
+                  <Label htmlFor="delivery-charge" className="text-sm font-medium text-slate-600">
                     Delivery Charge (USD)
                   </Label>
                   <Input
@@ -282,15 +277,13 @@ export default function OptimizePage({ params }: PageProps) {
               <Button onClick={runOptimizer} disabled={loading}>
                 {loading ? 'Running...' : 'Run Optimizer'}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {error && (
-            <Card className="border-destructive">
-              <CardContent className="pt-6">
-                <p className="text-sm text-destructive">{error}</p>
-              </CardContent>
-            </Card>
+            <div className="soft-card" style={{ border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
           )}
 
           {loading && <LoadingSkeleton />}
@@ -298,49 +291,35 @@ export default function OptimizePage({ params }: PageProps) {
           {result && !loading && (
             <div className="space-y-6">
               <SavingsSummary result={result} />
-              <Card>
-                <CardHeader>
-                  <CardTitle>Purchase Plan</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <PurchasePlanTable ports={result.ports} oilGrades={oilGrades} />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>ROB Projection</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ROBProjectionChart ports={result.ports} oilGrades={oilGrades} />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Price Comparison</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <PriceComparisonChart ports={result.ports} />
-                </CardContent>
-              </Card>
+              <div className="soft-card">
+                <h3 className="section-label mb-3">Purchase Plan</h3>
+                <PurchasePlanTable ports={result.ports} oilGrades={oilGrades} />
+              </div>
+              <div className="soft-card">
+                <h3 className="section-label mb-3">ROB Projection</h3>
+                <ROBProjectionChart ports={result.ports} oilGrades={oilGrades} />
+              </div>
+              <div className="soft-card">
+                <h3 className="section-label mb-3">Price Comparison</h3>
+                <PriceComparisonChart ports={result.ports} />
+              </div>
             </div>
           )}
         </TabsContent>
 
         {/* ==================== SMART TAB ==================== */}
         <TabsContent value="smart" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Smart Multi-Strategy Optimizer</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <p className="text-sm text-muted-foreground">
+          <div className="soft-card">
+            <h2 className="section-label mb-4">Smart Multi-Strategy Optimizer</h2>
+            <div className="space-y-6">
+              <p className="text-sm text-slate-400">
                 Runs multiple optimization strategies in parallel and ranks results by total cost.
                 Evaluates 360+ parameter combinations plus 3 specialized algorithms.
               </p>
 
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-3">
-                  <Label htmlFor="smart-delivery-charge" className="text-sm font-medium">
+                  <Label htmlFor="smart-delivery-charge" className="text-sm font-medium text-slate-600">
                     Delivery Charge (USD)
                   </Label>
                   <Input
@@ -353,18 +332,18 @@ export default function OptimizePage({ params }: PageProps) {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-sm font-medium">Strategies</label>
+                  <label className="text-sm font-medium text-slate-600">Strategies</label>
                   <div className="flex flex-wrap gap-2">
                     {ALL_STRATEGIES.map((s) => (
                       <button
                         key={s.value}
                         type="button"
                         onClick={() => toggleStrategy(s.value)}
-                        className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                        className={
                           enabledStrategies.includes(s.value)
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border text-muted-foreground hover:bg-muted'
-                        }`}
+                            ? 'chip-active'
+                            : 'chip-inactive'
+                        }
                       >
                         {s.label}
                       </button>
@@ -376,33 +355,27 @@ export default function OptimizePage({ params }: PageProps) {
               <Button onClick={runSmartOptimizer} disabled={smartLoading}>
                 {smartLoading ? 'Running...' : 'Run Smart Optimizer'}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {smartError && (
-            <Card className="border-destructive">
-              <CardContent className="pt-6">
-                <p className="text-sm text-destructive">{smartError}</p>
-              </CardContent>
-            </Card>
+            <div className="soft-card" style={{ border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+              <p className="text-sm text-red-600">{smartError}</p>
+            </div>
           )}
 
           {smartLoading && <LoadingSkeleton />}
 
           {smartResult && !smartLoading && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Ranked Plans</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RankedPlansTable
-                  result={smartResult}
-                  oilGrades={smartOilGrades}
-                  onSavePlan={handleSmartSave}
-                  saving={saving}
-                />
-              </CardContent>
-            </Card>
+            <div className="soft-card">
+              <h3 className="section-label mb-3">Ranked Plans</h3>
+              <RankedPlansTable
+                result={smartResult}
+                oilGrades={smartOilGrades}
+                onSavePlan={handleSmartSave}
+                saving={saving}
+              />
+            </div>
           )}
         </TabsContent>
       </Tabs>
@@ -415,31 +388,23 @@ function LoadingSkeleton() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-24" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-32" />
-              <div className="mt-2 space-y-1">
-                <Skeleton className="h-3 w-28" />
-                <Skeleton className="h-3 w-28" />
-                <Skeleton className="h-3 w-28" />
-              </div>
-            </CardContent>
-          </Card>
+          <div key={i} className="soft-card">
+            <Skeleton className="h-4 w-24 mb-2" />
+            <Skeleton className="h-8 w-32" />
+            <div className="mt-2 space-y-1">
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-3 w-28" />
+            </div>
+          </div>
         ))}
       </div>
-      <Card>
-        <CardContent className="pt-6">
-          <Skeleton className="h-[300px] w-full" />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-6">
-          <Skeleton className="h-[400px] w-full" />
-        </CardContent>
-      </Card>
+      <div className="soft-card">
+        <Skeleton className="h-[300px] w-full" />
+      </div>
+      <div className="soft-card">
+        <Skeleton className="h-[400px] w-full" />
+      </div>
     </div>
   );
 }
