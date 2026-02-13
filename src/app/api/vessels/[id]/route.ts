@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getVesselById } from '@/lib/db/data-access';
+import { cached } from '@/lib/db/cache';
 
 export async function GET(
   _request: Request,
@@ -7,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const vessel = await getVesselById(id);
+    const vessel = await cached(`vessel:${id}`, () => getVesselById(id), 5 * 60 * 1000);
     if (!vessel) {
       return NextResponse.json({ error: 'Vessel not found' }, { status: 404 });
     }

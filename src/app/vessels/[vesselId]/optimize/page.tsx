@@ -174,10 +174,10 @@ export default function OptimizePage({ params }: PageProps) {
         )}
       </div>
 
-      <Tabs defaultValue="standard">
+      <Tabs defaultValue="smart">
         <TabsList>
-          <TabsTrigger value="standard">Standard</TabsTrigger>
           <TabsTrigger value="smart">Smart</TabsTrigger>
+          <TabsTrigger value="standard">Standard</TabsTrigger>
         </TabsList>
 
         {/* ==================== STANDARD TAB ==================== */}
