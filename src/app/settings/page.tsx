@@ -6,7 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Save, RotateCcw } from 'lucide-react';
+import { Save, RotateCcw, Database, Loader2 } from 'lucide-react';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '@/components/ui/table';
 
 interface Config {
   tankCapacityCylinder: number;
@@ -38,7 +46,7 @@ const defaultConfig: Config = {
   windowSize: 5,
   safetyBufferPct: 10,
   priceMtToLDivisor: 1111,
-  deliveryChargeDefault: 500,
+  deliveryChargeDefault: 1500,
   minOrderQtyMeSystem: 10000,
   minOrderQtyAeSystem: 10000,
   targetFillPct: 70,
@@ -46,11 +54,21 @@ const defaultConfig: Config = {
   opportunityDiscountPct: 10,
 };
 
+interface PortDeliveryConfigRow {
+  portName: string;
+  country: string;
+  differentialPer100L: number;
+  leadTimeDays: number;
+}
+
 export default function SettingsPage() {
   const [config, setConfig] = useState<Config>(defaultConfig);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [portConfigs, setPortConfigs] = useState<PortDeliveryConfigRow[]>([]);
+  const [portConfigLoading, setPortConfigLoading] = useState(true);
+  const [portConfigFilter, setPortConfigFilter] = useState('');
 
   useEffect(() => {
     fetch('/api/config')
@@ -58,6 +76,30 @@ export default function SettingsPage() {
       .then((data) => setConfig({ ...defaultConfig, ...data }))
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    fetch('/api/pricing')
+      .then((res) => res.json())
+      .then((data: Array<{ port: string; country: string; differentialPer100L?: number; leadTimeDays?: number }>) => {
+        // Deduplicate by port+country (multiple supplier docs per port) and filter to those with delivery config
+        const seen = new Set<string>();
+        const configs: PortDeliveryConfigRow[] = [];
+        for (const doc of data) {
+          if (doc.differentialPer100L == null) continue;
+          const key = `${doc.port}|${doc.country}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          configs.push({
+            portName: doc.port,
+            country: doc.country,
+            differentialPer100L: doc.differentialPer100L!,
+            leadTimeDays: doc.leadTimeDays ?? 5,
+          });
+        }
+        configs.sort((a, b) => a.portName.localeCompare(b.portName));
+        setPortConfigs(configs);
+      })
+      .catch(console.error)
+      .finally(() => setPortConfigLoading(false));
   }, []);
 
   const handleSave = async () => {
@@ -251,7 +293,7 @@ export default function SettingsPage() {
       <div className="soft-card">
         <h3 className="section-label mb-4">Delivery Charges</h3>
         <div className="space-y-2">
-          <Label htmlFor="delivery-charge" className="text-slate-600">Default Charge (USD per bunkering event)</Label>
+          <Label htmlFor="delivery-charge" className="text-slate-600">Fallback Delivery Charge (USD)</Label>
           <Input
             id="delivery-charge"
             type="number"
@@ -259,9 +301,83 @@ export default function SettingsPage() {
             onChange={(e) => updateField('deliveryChargeDefault', Number(e.target.value))}
           />
           <p className="caption">
-            Fixed cost charged per delivery, regardless of volume ordered
+            Default value used when a port does not have delivery charges available
           </p>
         </div>
+      </div>
+
+      {/* Port Delivery Charges (Shell Marine Data) */}
+      <div className="soft-card">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="section-label">Port Delivery Charges</h3>
+            <p className="caption mt-1">
+              Variable delivery costs from Shell Marine Price Guide. Ports not listed use the default flat charge above.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Database className="h-4 w-4 text-slate-400" />
+            <span className="text-xs text-slate-400">{portConfigs.length} ports</span>
+          </div>
+        </div>
+        {portConfigLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+          </div>
+        ) : portConfigs.length === 0 ? (
+          <p className="text-sm text-slate-400 py-4">
+            No port delivery configs found. Run the seed script to populate Shell Marine data.
+          </p>
+        ) : (
+          <>
+            <Input
+              placeholder="Filter ports..."
+              value={portConfigFilter}
+              onChange={(e) => setPortConfigFilter(e.target.value)}
+              className="mb-3 max-w-xs"
+            />
+            <div className="max-h-80 overflow-y-auto rounded-lg" style={{ border: '1px solid rgba(148, 163, 184, 0.15)' }}>
+              <Table>
+                <TableHeader>
+                  <TableRow style={{ background: 'rgba(248, 250, 252, 0.6)' }}>
+                    <TableHead className="text-[10px] uppercase tracking-wider text-slate-400">Port</TableHead>
+                    <TableHead className="text-[10px] uppercase tracking-wider text-slate-400">Country</TableHead>
+                    <TableHead className="text-right text-[10px] uppercase tracking-wider text-slate-400">$/100L</TableHead>
+                    <TableHead className="text-right text-[10px] uppercase tracking-wider text-slate-400">Lead Time</TableHead>
+                    <TableHead className="text-right text-[10px] uppercase tracking-wider text-slate-400">Est. 20kL</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {portConfigs
+                    .filter((pc) => {
+                      if (!portConfigFilter) return true;
+                      const f = portConfigFilter.toLowerCase();
+                      return pc.portName.toLowerCase().includes(f) || pc.country.toLowerCase().includes(f);
+                    })
+                    .slice(0, 100)
+                    .map((pc) => (
+                      <TableRow key={`${pc.portName}-${pc.country}`} style={{ borderColor: 'rgba(148, 163, 184, 0.08)' }}>
+                        <TableCell className="text-sm text-slate-700">{pc.portName}</TableCell>
+                        <TableCell className="text-sm text-slate-400">{pc.country}</TableCell>
+                        <TableCell className="text-right tabular-nums text-sm text-slate-600">${pc.differentialPer100L}</TableCell>
+                        <TableCell className="text-right text-sm text-slate-600">{pc.leadTimeDays}d</TableCell>
+                        <TableCell className="text-right tabular-nums text-sm text-slate-600">
+                          ${((pc.differentialPer100L / 100) * 20000).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+            {portConfigs.filter((pc) => {
+              if (!portConfigFilter) return true;
+              const f = portConfigFilter.toLowerCase();
+              return pc.portName.toLowerCase().includes(f) || pc.country.toLowerCase().includes(f);
+            }).length > 100 && (
+              <p className="caption mt-2">Showing first 100 results. Use filter to narrow down.</p>
+            )}
+          </>
+        )}
       </div>
 
       {/* Minimum Order Quantities */}

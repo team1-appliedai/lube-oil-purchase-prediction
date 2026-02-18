@@ -33,7 +33,7 @@ export default function OptimizePage({ params }: PageProps) {
   const [targetFillPct, setTargetFillPct] = useState(70);
   const [opportunityDiscountPct, setOpportunityDiscountPct] = useState(10);
   const [robTriggerMultiplier, setRobTriggerMultiplier] = useState(1.2);
-  const [deliveryChargeDefault, setDeliveryChargeDefault] = useState(500);
+  const [deliveryChargeDefault, setDeliveryChargeDefault] = useState(1500);
   const [result, setResult] = useState<OptimizerOutput | null>(null);
   const [oilGrades, setOilGrades] = useState<OilGradeConfig[]>([]);
   const [loading, setLoading] = useState(false);
@@ -44,7 +44,7 @@ export default function OptimizePage({ params }: PageProps) {
   const [smartOilGrades, setSmartOilGrades] = useState<OilGradeConfig[]>([]);
   const [smartLoading, setSmartLoading] = useState(false);
   const [smartError, setSmartError] = useState<string | null>(null);
-  const [smartDeliveryCharge, setSmartDeliveryCharge] = useState(500);
+  const [smartDeliveryCharge, setSmartDeliveryCharge] = useState(1500);
   const [enabledStrategies, setEnabledStrategies] = useState<StrategyName[]>([
     'grid', 'cheapest-port', 'delivery-aware', 'consolidated',
   ]);
@@ -263,7 +263,7 @@ export default function OptimizePage({ params }: PageProps) {
                 </div>
                 <div className="space-y-3">
                   <Label htmlFor="delivery-charge" className="text-sm font-medium text-slate-600">
-                    Delivery Charge (USD)
+                    Fallback Delivery Charge (USD)
                   </Label>
                   <Input
                     id="delivery-charge"
@@ -272,6 +272,9 @@ export default function OptimizePage({ params }: PageProps) {
                     onChange={(e) => setDeliveryChargeDefault(Number(e.target.value))}
                     className="h-9"
                   />
+                  <p className="text-[11px] text-slate-400">
+                    Default value used when a port does not have delivery charges available
+                  </p>
                 </div>
               </div>
               <Button onClick={runOptimizer} disabled={loading}>
@@ -320,7 +323,7 @@ export default function OptimizePage({ params }: PageProps) {
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-3">
                   <Label htmlFor="smart-delivery-charge" className="text-sm font-medium text-slate-600">
-                    Delivery Charge (USD)
+                    Fallback Delivery Charge (USD)
                   </Label>
                   <Input
                     id="smart-delivery-charge"
@@ -329,6 +332,9 @@ export default function OptimizePage({ params }: PageProps) {
                     onChange={(e) => setSmartDeliveryCharge(Number(e.target.value))}
                     className="h-9"
                   />
+                  <p className="text-[11px] text-slate-400">
+                    Default value used when a port does not have delivery charges available
+                  </p>
                 </div>
 
                 <div className="space-y-3">

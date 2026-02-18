@@ -92,7 +92,7 @@ export async function POST(request: Request) {
     const result = runSmartOptimizer(input, {
       strategies: strategies as StrategyName[] | undefined,
       topN: topN ?? 5,
-      deliveryChargeDefault: deliveryChargeDefault ?? 500,
+      deliveryChargeDefault: deliveryChargeDefault ?? 1500,
     });
 
     return NextResponse.json({ result, oilGrades: input.oilGrades });

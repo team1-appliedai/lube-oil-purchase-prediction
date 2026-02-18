@@ -5,7 +5,8 @@ import type {
   OilGradeConfig,
   PortStop,
 } from '../types';
-import { getPortPrice } from '../engine';
+import { getPortPrice, computeAvailableDays } from '../engine';
+import { computeDeliveryCost } from '../delivery-cost';
 
 /**
  * Delivery Consolidation Post-Processor.
@@ -49,7 +50,15 @@ export function consolidateDeliveries(
 
     for (const portIdx of deliveryPorts) {
       const oilValue = computeOilValue(portIdx, allocations, ports, oilGrades);
-      const dc = ports[portIdx].deliveryCharge;
+      const totalLiters = computeTotalLitersAtPort(portIdx, allocations, oilGrades);
+      const availableDays = computeAvailableDays(ports[portIdx].arrivalDate);
+      const breakdown = computeDeliveryCost(
+        ports[portIdx].deliveryConfig,
+        totalLiters,
+        availableDays,
+        ports[portIdx].deliveryCharge
+      );
+      const dc = breakdown.total;
       if (dc <= 0) continue; // free delivery, always worth it
       const ratio = oilValue / dc;
 
@@ -96,7 +105,12 @@ export function consolidateDeliveries(
         // Try merging the smaller value port into the larger value port
         const [fromPort, toPort] =
           oilValueA <= oilValueB ? [portA, portB] : [portB, portA];
-        const savedDC = ports[fromPort].deliveryCharge;
+        const fromLiters = computeTotalLitersAtPort(fromPort, allocations, oilGrades);
+        const fromAvailDays = computeAvailableDays(ports[fromPort].arrivalDate);
+        const fromBreakdown = computeDeliveryCost(
+          ports[fromPort].deliveryConfig, fromLiters, fromAvailDays, ports[fromPort].deliveryCharge
+        );
+        const savedDC = fromBreakdown.total;
 
         // Only merge if the extra oil cost is less than the saved delivery charge
         const extraCost = computeMergeExtraCost(fromPort, toPort, allocations, ports, oilGrades);
@@ -155,6 +169,19 @@ function getDeliveryPorts(
     }
   }
   return Array.from(ports).sort((a, b) => a - b);
+}
+
+/** Total liters purchased at a port across all grades. */
+function computeTotalLitersAtPort(
+  portIdx: number,
+  allocations: Record<OilGradeCategory, Map<number, number>>,
+  oilGrades: OilGradeConfig[]
+): number {
+  let total = 0;
+  for (const gradeConfig of oilGrades) {
+    total += allocations[gradeConfig.category].get(portIdx) ?? 0;
+  }
+  return total;
 }
 
 /** Total oil purchase value (qty × price) at a port across all grades. */

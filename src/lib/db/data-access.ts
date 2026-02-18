@@ -201,6 +201,14 @@ export async function getPrices(supplier?: string): Promise<PortPrice[]> {
       cylinderOilHS: convertPriceMap(doc[f.cylinderOilHS]),
       meCrankcaseOil: convertPriceMap(doc[f.meCrankcaseOil]),
       aeCrankcaseOil: convertPriceMap(doc[f.aeCrankcaseOil]),
+      // Delivery config fields (may be undefined if not seeded yet)
+      ...(doc.differentialPer100L != null && {
+        differentialPer100L: Number(doc.differentialPer100L),
+        leadTimeDays: Number(doc.leadTimeDays ?? 5),
+        smallOrderThresholdL: Number(doc.smallOrderThresholdL ?? 4000),
+        smallOrderSurcharge: Number(doc.smallOrderSurcharge ?? 200),
+        urgentOrderSurcharge: Number(doc.urgentOrderSurcharge ?? 200),
+      }),
     };
   });
 }

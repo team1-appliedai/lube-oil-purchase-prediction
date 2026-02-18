@@ -5,7 +5,8 @@ import type {
   OilGradeCategory,
   PurchaseAction,
 } from '../types';
-import { computeBaseline, getPortPrice } from '../engine';
+import { computeBaseline, getPortPrice, computeAvailableDays } from '../engine';
+import { computeDeliveryCost } from '../delivery-cost';
 
 /**
  * Shared output builder for all strategies.
@@ -18,7 +19,8 @@ import { computeBaseline, getPortPrice } from '../engine';
 export function buildOutputWithAlerts(
   input: OptimizerInput,
   allocations: Record<OilGradeCategory, Map<number, number>>,
-  buffer: number
+  buffer: number,
+  precomputedBaseline?: { cost: Record<OilGradeCategory, number>; deliveryCharges: number; purchaseEvents: number }
 ): OptimizerOutput {
   const { vessel, ports, currentRob, oilGrades, minOrderQty } = input;
 
@@ -97,15 +99,29 @@ export function buildOutputWithAlerts(
     }
 
     if (portHasPurchase) {
-      portPlan.deliveryCharge = port.deliveryCharge;
-      totalDeliveryCharges += port.deliveryCharge;
+      // Sum total liters at this port for variable delivery cost
+      let totalLitersAtPort = 0;
+      for (const gradeConfig of oilGrades) {
+        totalLitersAtPort += portPlan.actions[gradeConfig.category].quantity;
+      }
+
+      const availableDays = computeAvailableDays(port.arrivalDate);
+      const breakdown = computeDeliveryCost(
+        port.deliveryConfig,
+        totalLitersAtPort,
+        availableDays,
+        port.deliveryCharge
+      );
+      portPlan.deliveryCharge = breakdown.total;
+      portPlan.deliveryBreakdown = breakdown;
+      totalDeliveryCharges += breakdown.total;
       purchaseEvents++;
     }
 
     portPlans.push(portPlan);
   }
 
-  const baseline = computeBaseline(input, buffer);
+  const baseline = precomputedBaseline ?? computeBaseline(input, buffer);
 
   const totalOptimized =
     totalCost.cylinderOil + totalCost.meSystemOil + totalCost.aeSystemOil + totalDeliveryCharges;

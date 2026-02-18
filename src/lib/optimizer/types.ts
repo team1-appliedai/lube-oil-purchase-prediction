@@ -50,6 +50,12 @@ export interface PortPrice {
   cylinderOilHS: Record<string, number>;
   meCrankcaseOil: Record<string, number>;
   aeCrankcaseOil: Record<string, number>;
+  // Delivery config fields (from Shell Marine Price Guide, stored on same doc)
+  differentialPer100L?: number;
+  leadTimeDays?: number;
+  smallOrderThresholdL?: number;
+  smallOrderSurcharge?: number;
+  urgentOrderSurcharge?: number;
 }
 
 export interface VesselSupplierMapping {
@@ -77,12 +83,34 @@ export interface OilGradeConfig {
 }
 
 // ============================================================
+// Port Delivery Config (from Shell Marine Price Guide)
+// ============================================================
+
+export interface PortDeliveryConfig {
+  portName: string;
+  country: string;
+  differentialPer100L: number;   // USD per 100L (e.g., 14 for Singapore)
+  leadTimeDays: number;          // working days (e.g., 1 for Singapore)
+  smallOrderThresholdL: number;  // 4000 (bulk) or 800 (packed)
+  smallOrderSurcharge: number;   // 200 USD
+  urgentOrderSurcharge: number;  // 200 USD
+}
+
+export interface DeliveryBreakdown {
+  differential: number;
+  smallOrderSurcharge: number;
+  urgentSurcharge: number;
+  total: number;
+}
+
+// ============================================================
 // New Config Types — Realistic Maritime Procurement
 // ============================================================
 
 export interface DeliveryChargeConfig {
-  defaultCharge: number;                    // USD per bunkering event (default: 500)
+  defaultCharge: number;                    // USD per bunkering event (default: 1500)
   portOverrides: Record<string, number>;    // portCode -> charge
+  portConfigs: PortDeliveryConfig[];        // variable delivery configs from Shell data
 }
 
 export interface MinOrderConfig {
@@ -108,7 +136,8 @@ export interface PortStop {
   arrivalDate: string;
   departureDate: string;
   seaDaysToNext: number;           // days at sea to next port
-  deliveryCharge: number;          // USD per bunkering event at this port
+  deliveryCharge: number;          // USD flat fallback (used when no config)
+  deliveryConfig: PortDeliveryConfig | null; // variable delivery config
   prices: {
     cylinderOil: number | null;     // best price in USD/L for vessel's supplier
     meSystemOil: number | null;
@@ -151,6 +180,7 @@ export interface PortPlan {
   departureDate: string;
   seaDaysToNext: number;
   deliveryCharge: number;           // charge incurred if any grade ordered at this port
+  deliveryBreakdown?: DeliveryBreakdown; // detailed breakdown when variable config used
   actions: {
     [grade in OilGradeCategory]: {
       action: PurchaseAction;

@@ -10,6 +10,7 @@ import type {
   DeliveryChargeConfig,
   MinOrderConfig,
   ReorderConfig,
+  PortDeliveryConfig,
 } from './types';
 import {
   computeDailyConsumption,
@@ -46,9 +47,11 @@ export function buildOptimizerInput(params: {
   } = params;
 
   // Build delivery charges config
+  // Port delivery configs are now derived from price docs (see buildPortStops)
   const deliveryCharges: DeliveryChargeConfig = {
-    defaultCharge: params.deliveryCharges?.defaultCharge ?? (Number(process.env.DELIVERY_CHARGE_DEFAULT) || 500),
+    defaultCharge: params.deliveryCharges?.defaultCharge ?? (Number(process.env.DELIVERY_CHARGE_DEFAULT) || 1500),
     portOverrides: params.deliveryCharges?.portOverrides ?? {},
+    portConfigs: params.deliveryCharges?.portConfigs ?? [],
   };
 
   // Build min order qty config
@@ -129,7 +132,7 @@ export function buildOptimizerInput(params: {
   });
 
   // 5. Build port stops with prices, sea days, and delivery charges
-  const ports = buildPortStops(schedulePorts, supplierPrices, deliveryCharges);
+  const ports = buildPortStops(schedulePorts, supplierPrices, deliveryCharges, prices);
 
   return {
     vessel,
@@ -146,21 +149,41 @@ export function buildOptimizerInput(params: {
 
 /**
  * Convert schedule ports + prices into PortStop[] with sea days, prices, and delivery charges.
+ * Delivery config is derived from PortPrice docs (which now carry delivery fields).
  */
 function buildPortStops(
   schedulePorts: SchedulePort[],
-  prices: PortPrice[],
-  deliveryCharges: DeliveryChargeConfig
+  supplierPrices: PortPrice[],
+  deliveryCharges: DeliveryChargeConfig,
+  allPrices: PortPrice[]
 ): PortStop[] {
   const portStops: PortStop[] = [];
 
-  // Build a price lookup by port name and country (case-insensitive)
+  // Build a price lookup by port name and country (case-insensitive) — supplier-filtered
   const priceLookup = new Map<string, PortPrice>();
-  for (const p of prices) {
+  for (const p of supplierPrices) {
     const key = `${p.port.toLowerCase()}|${p.country.toLowerCase()}`;
     priceLookup.set(key, p);
-    // Also index by just port name
     priceLookup.set(p.port.toLowerCase(), p);
+  }
+
+  // Build a delivery config lookup from ALL prices (any supplier, since delivery is per-port)
+  // Pick the first doc that has delivery fields for each port+country
+  const deliveryConfigLookup = new Map<string, PortDeliveryConfig>();
+  for (const p of allPrices) {
+    if (p.differentialPer100L == null) continue;
+    const key = `${p.port.toLowerCase()}|${p.country.toLowerCase()}`;
+    if (deliveryConfigLookup.has(key)) continue; // first one wins
+    deliveryConfigLookup.set(key, {
+      portName: p.port,
+      country: p.country,
+      differentialPer100L: p.differentialPer100L!,
+      leadTimeDays: p.leadTimeDays ?? 5,
+      smallOrderThresholdL: p.smallOrderThresholdL ?? 4000,
+      smallOrderSurcharge: p.smallOrderSurcharge ?? 200,
+      urgentOrderSurcharge: p.urgentOrderSurcharge ?? 200,
+    });
+    deliveryConfigLookup.set(p.port.toLowerCase(), deliveryConfigLookup.get(key)!);
   }
 
   for (let i = 0; i < schedulePorts.length; i++) {
@@ -192,8 +215,15 @@ function buildPortStops(
       return Math.min(...Object.values(priceMap));
     };
 
-    // Delivery charge: port override or default
+    // Delivery charge: port override or default (flat fallback)
     const deliveryCharge = deliveryCharges.portOverrides[sp.portCode] ?? deliveryCharges.defaultCharge;
+
+    // Match delivery config from price docs using same fuzzy matching
+    const deliveryConfig = deliveryConfigLookup.get(priceKey)
+      || deliveryConfigLookup.get(portNameLower)
+      || deliveryConfigLookup.get(`${shortName}|${countryLower}`)
+      || deliveryConfigLookup.get(shortName)
+      || null;
 
     portStops.push({
       portName: sp.portName,
@@ -203,6 +233,7 @@ function buildPortStops(
       departureDate: sp.departureDate || '',
       seaDaysToNext,
       deliveryCharge,
+      deliveryConfig,
       prices: {
         cylinderOil: portPrice ? getBestPrice(portPrice.cylinderOilLS) ?? getBestPrice(portPrice.cylinderOilHS) : null,
         meSystemOil: portPrice ? getBestPrice(portPrice.meCrankcaseOil) : null,

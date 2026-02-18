@@ -17,7 +17,7 @@ import { consolidateDeliveries, extractAllocations } from './strategies/consolid
 const DEFAULT_CONFIG: SmartOptimizerConfig = {
   strategies: ['grid', 'cheapest-port', 'delivery-aware', 'consolidated'],
   topN: 5,
-  deliveryChargeDefault: 500,
+  deliveryChargeDefault: 1500,
   grid: {
     targetFillPcts: [0.55, 0.60, 0.65, 0.70, 0.75, 0.80],
     opportunityDiscountPcts: [5, 10, 15, 20, 25],
@@ -57,7 +57,7 @@ export function runSmartOptimizer(
 
   // Strategy 1: Grid Search
   if (cfg.strategies.includes('grid')) {
-    const gridPlans = runGridSearch(baseInput, cfg, baselineAllInCost);
+    const gridPlans = runGridSearch(baseInput, cfg, baselineAllInCost, baseline);
     combinationsEvaluated += gridPlans.count;
     allPlans.push(...gridPlans.plans);
   }
@@ -125,7 +125,8 @@ export function runSmartOptimizer(
 function runGridSearch(
   baseInput: OptimizerInput,
   cfg: SmartOptimizerConfig,
-  baselineAllInCost: number
+  baselineAllInCost: number,
+  sharedBaseline: { cost: Record<import('./types').OilGradeCategory, number>; deliveryCharges: number; purchaseEvents: number }
 ): { plans: RankedPlan[]; count: number } {
   const plans: RankedPlan[] = [];
   let count = 0;
@@ -154,7 +155,7 @@ function runGridSearch(
           const baseOutput = runOptimizer(modifiedInput);
           const allocs = extractAllocations(baseOutput, baseInput.oilGrades);
           consolidateDeliveries(modifiedInput, allocs, buffer);
-          const output = buildOutputWithAlerts(modifiedInput, allocs, buffer);
+          const output = buildOutputWithAlerts(modifiedInput, allocs, buffer, sharedBaseline);
           const allInCost = output.totalCost.total + output.totalDeliveryCharges;
           const { safe, robBreaches } = validatePlanSafety(output, modifiedInput);
 

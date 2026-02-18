@@ -8,6 +8,7 @@ import type {
 import { computeRouteAveragePrice, getPortPrice } from '../engine';
 import { buildOutputWithAlerts } from './build-output';
 import { consolidateDeliveries } from './consolidate-deliveries';
+import { estimateDeliveryCost } from '../delivery-cost';
 
 /**
  * Consolidated Strategy — minimize delivery events.
@@ -28,9 +29,9 @@ export function runConsolidatedStrategy(input: OptimizerInput): OptimizerOutput 
 
   for (let i = 0; i < ports.length; i++) {
     const port = ports[i];
-    let totalScore = -port.deliveryCharge; // delivery cost is a penalty
     const gradeQtys: Record<OilGradeCategory, number> = { cylinderOil: 0, meSystemOil: 0, aeSystemOil: 0 };
     let hasAnyPrice = false;
+    let estimatedTotalLiters = 0;
 
     for (const gradeConfig of oilGrades) {
       const grade = gradeConfig.category;
@@ -38,12 +39,23 @@ export function runConsolidatedStrategy(input: OptimizerInput): OptimizerOutput 
       if (price === null || price <= 0) continue;
 
       hasAnyPrice = true;
-      const avgPrice = routeAvgPrice[grade];
-      const priceDiff = avgPrice - price; // positive = this port is cheaper than average
       // Estimate max quantity we'd buy (rough: target fill from empty)
       const estimatedQty = gradeConfig.tankConfig.capacity * targetFillPct * 0.5;
-      totalScore += priceDiff * estimatedQty;
       gradeQtys[grade] = estimatedQty;
+      estimatedTotalLiters += estimatedQty;
+    }
+
+    // Use estimated delivery cost as penalty (volume-aware)
+    const estDeliveryCost = estimateDeliveryCost(port.deliveryConfig, estimatedTotalLiters, port.deliveryCharge);
+    let totalScore = -estDeliveryCost;
+
+    for (const gradeConfig of oilGrades) {
+      const grade = gradeConfig.category;
+      const price = getPortPrice(port, grade);
+      if (price === null || price <= 0) continue;
+      const avgPrice = routeAvgPrice[grade];
+      const priceDiff = avgPrice - price; // positive = this port is cheaper than average
+      totalScore += priceDiff * gradeQtys[grade];
     }
 
     if (hasAnyPrice) {

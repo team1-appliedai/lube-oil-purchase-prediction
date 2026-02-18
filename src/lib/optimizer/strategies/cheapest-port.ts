@@ -8,6 +8,7 @@ import type {
 import { getPortPrice } from '../engine';
 import { buildOutputWithAlerts } from './build-output';
 import { consolidateDeliveries } from './consolidate-deliveries';
+import { estimateDeliveryCost } from '../delivery-cost';
 
 /**
  * Cheapest-Port Strategy — backward-planning algorithm.
@@ -236,7 +237,9 @@ function consolidateAcrossGrades(
       // Compare: piggybacking cost vs doing nothing
       // Piggyback: buy some qty at this port's price, potentially reduce future buy
       const futurePrice = getPortPrice(ports[futureDeliveryIdx], grade) ?? 0;
-      const deliveryCost = ports[futureDeliveryIdx].deliveryCharge;
+      const deliveryCost = estimateDeliveryCost(
+        ports[futureDeliveryIdx].deliveryConfig, 20000, ports[futureDeliveryIdx].deliveryCharge
+      );
 
       // Only piggyback if price here is not much worse than future price
       // and the saved delivery cost justifies it

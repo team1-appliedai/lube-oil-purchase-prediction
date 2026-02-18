@@ -9,6 +9,7 @@ import type {
   MinOrderConfig,
   ReorderConfig,
 } from './types';
+import { computeDeliveryCost } from './delivery-cost';
 
 /**
  * Pure optimizer — skip-by-default with urgency/opportunity triggers.
@@ -119,8 +120,24 @@ export function runOptimizer(input: OptimizerInput): OptimizerOutput {
 
     // Delivery charge — once per port if any grade was purchased
     if (portHasPurchase) {
-      portPlan.deliveryCharge = port.deliveryCharge;
-      totalDeliveryCharges += port.deliveryCharge;
+      // Sum total liters purchased at this port across all grades
+      let totalLitersAtPort = 0;
+      for (const gradeConfig of oilGrades) {
+        totalLitersAtPort += portPlan.actions[gradeConfig.category].quantity;
+      }
+
+      // Compute days between now and arrival for urgency check
+      const availableDays = computeAvailableDays(port.arrivalDate);
+
+      const breakdown = computeDeliveryCost(
+        port.deliveryConfig,
+        totalLitersAtPort,
+        availableDays,
+        port.deliveryCharge
+      );
+      portPlan.deliveryCharge = breakdown.total;
+      portPlan.deliveryBreakdown = breakdown;
+      totalDeliveryCharges += breakdown.total;
       purchaseEvents++;
     }
 
@@ -459,6 +476,7 @@ export function computeBaseline(
   for (let i = 0; i < ports.length; i++) {
     const port = ports[i];
     let portHasPurchase = false;
+    let totalLitersAtPort = 0;
 
     for (const gradeConfig of oilGrades) {
       const grade = gradeConfig.category;
@@ -478,16 +496,39 @@ export function computeBaseline(
         cost[grade] += qty * priceAtPort;
         rob[grade] = robOnArrival + qty - consumptionToNext;
         portHasPurchase = true;
+        totalLitersAtPort += qty;
       } else {
         rob[grade] = robAtNextIfNoBuy;
       }
     }
 
     if (portHasPurchase) {
-      deliveryCharges += port.deliveryCharge;
+      const availableDays = computeAvailableDays(port.arrivalDate);
+      const breakdown = computeDeliveryCost(
+        port.deliveryConfig,
+        totalLitersAtPort,
+        availableDays,
+        port.deliveryCharge
+      );
+      deliveryCharges += breakdown.total;
       purchaseEvents++;
     }
   }
 
   return { cost, deliveryCharges, purchaseEvents };
+}
+
+/**
+ * Compute working days between now and a port arrival date.
+ * Returns -1 if arrival date is invalid (treated as unknown/plenty of time).
+ */
+export function computeAvailableDays(arrivalDate: string): number {
+  if (!arrivalDate) return -1;
+  const arrival = new Date(arrivalDate);
+  if (isNaN(arrival.getTime())) return -1;
+  const now = new Date();
+  const diffMs = arrival.getTime() - now.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  // Approximate working days as 5/7 of calendar days
+  return Math.max(0, Math.floor(diffDays * (5 / 7)));
 }

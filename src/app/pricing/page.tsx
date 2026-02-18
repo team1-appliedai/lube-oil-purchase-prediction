@@ -51,6 +51,8 @@ interface FlatRow {
   cylPrice: number | null;
   mePrice: number | null;
   aePrice: number | null;
+  diffPer100L: number | null;
+  leadTimeDays: number | null;
   _idx: number;
 }
 
@@ -269,6 +271,8 @@ export default function PricingPage() {
       cylPrice: getBestPrice({ ...p.cylinderOilLS, ...p.cylinderOilHS }),
       mePrice: getBestPrice(p.meCrankcaseOil),
       aePrice: getBestPrice(p.aeCrankcaseOil),
+      diffPer100L: p.differentialPer100L ?? null,
+      leadTimeDays: p.leadTimeDays ?? null,
       _idx: i,
     })),
     [prices]
@@ -458,6 +462,28 @@ export default function PricingPage() {
                     <SortButton dir={getSortDir('aePrice')} onClick={() => toggleSort('aePrice')} />
                   </div>
                 </TableHead>
+
+                {/* Delivery $/100L */}
+                <TableHead className="text-right text-[11px] uppercase tracking-wider text-slate-400">
+                  <div className="flex items-center justify-end">
+                    <div className="text-right">
+                      <span>$/100L</span>
+                      <span className="block text-[9px] font-normal normal-case tracking-normal text-slate-300">(delivery)</span>
+                    </div>
+                    <SortButton dir={getSortDir('diffPer100L')} onClick={() => toggleSort('diffPer100L')} />
+                  </div>
+                </TableHead>
+
+                {/* Lead Time */}
+                <TableHead className="text-right text-[11px] uppercase tracking-wider text-slate-400">
+                  <div className="flex items-center justify-end">
+                    <div className="text-right">
+                      <span>Lead Time</span>
+                      <span className="block text-[9px] font-normal normal-case tracking-normal text-slate-300">(days)</span>
+                    </div>
+                    <SortButton dir={getSortDir('leadTimeDays')} onClick={() => toggleSort('leadTimeDays')} />
+                  </div>
+                </TableHead>
               </TableRow>
             </TableHeader>
 
@@ -478,11 +504,17 @@ export default function PricingPage() {
                   <TableCell className={`text-right tabular-nums ${getPriceColor(r.aePrice, allAePrices)}`}>
                     {formatPrice(r.aePrice)}
                   </TableCell>
+                  <TableCell className="text-right tabular-nums text-slate-500">
+                    {r.diffPer100L !== null ? `$${r.diffPer100L}` : '\u2014'}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums text-slate-500">
+                    {r.leadTimeDays !== null ? `${r.leadTimeDays}d` : '\u2014'}
+                  </TableCell>
                 </TableRow>
               ))}
               {processed.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-slate-400 py-8">
+                  <TableCell colSpan={8} className="text-center text-slate-400 py-8">
                     {activeFilterCount > 0 ? 'No records match the current filters.' : 'No pricing data found'}
                   </TableCell>
                 </TableRow>

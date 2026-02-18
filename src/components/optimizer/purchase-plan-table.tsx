@@ -10,7 +10,13 @@ import {
 } from '@/components/ui/table';
 import { ActionBadge } from '@/components/optimizer/action-badge';
 import { formatLiters, formatUSD, formatDateShort, formatNumber } from '@/lib/utils/format';
-import type { PortPlan, OilGradeConfig, OilGradeCategory } from '@/lib/optimizer/types';
+import type { PortPlan, OilGradeConfig, OilGradeCategory, DeliveryBreakdown } from '@/lib/optimizer/types';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface PurchasePlanTableProps {
   ports: PortPlan[];
@@ -52,7 +58,10 @@ export function PurchasePlanTable({ ports, oilGrades }: PurchasePlanTableProps) 
               <TableCell className="border-r border-slate-200/30 text-slate-600">{formatDateShort(port.arrivalDate)}</TableCell>
               <TableCell className="border-r border-slate-200/30 text-right text-slate-600">{formatNumber(port.seaDaysToNext, 1)}</TableCell>
               <TableCell className="border-r border-slate-200/30 text-right tabular-nums text-slate-600">
-                {port.deliveryCharge > 0 ? formatUSD(port.deliveryCharge) : '\u2014'}
+                <DeliveryChargeCell
+                  deliveryCharge={port.deliveryCharge}
+                  breakdown={port.deliveryBreakdown}
+                />
               </TableCell>
               {oilGrades.map((grade) => {
                 const action = port.actions[grade.category as OilGradeCategory];
@@ -93,6 +102,55 @@ interface GradeCellsProps {
   cost: number;
   robOnArrival: number;
   robOnDeparture: number;
+}
+
+function DeliveryChargeCell({ deliveryCharge, breakdown }: { deliveryCharge: number; breakdown?: DeliveryBreakdown }) {
+  if (deliveryCharge <= 0) return <>{'\u2014'}</>;
+
+  if (!breakdown || (!breakdown.smallOrderSurcharge && !breakdown.urgentSurcharge)) {
+    return <>{formatUSD(deliveryCharge)}</>;
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="cursor-help underline decoration-dotted underline-offset-4">
+            {formatUSD(deliveryCharge)}
+            {breakdown.urgentSurcharge > 0 && (
+              <span className="ml-1 inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700">
+                URGENT
+              </span>
+            )}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          <div className="space-y-1">
+            <div className="flex justify-between gap-4">
+              <span className="text-slate-400">Differential:</span>
+              <span>{formatUSD(breakdown.differential)}</span>
+            </div>
+            {breakdown.smallOrderSurcharge > 0 && (
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-400">Small order:</span>
+                <span>{formatUSD(breakdown.smallOrderSurcharge)}</span>
+              </div>
+            )}
+            {breakdown.urgentSurcharge > 0 && (
+              <div className="flex justify-between gap-4">
+                <span className="text-amber-500">Urgent order:</span>
+                <span>{formatUSD(breakdown.urgentSurcharge)}</span>
+              </div>
+            )}
+            <div className="flex justify-between gap-4 border-t border-slate-200/50 pt-1 font-medium">
+              <span>Total:</span>
+              <span>{formatUSD(breakdown.total)}</span>
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }
 
 function GradeCells({ action, quantity, cost, robOnArrival, robOnDeparture }: GradeCellsProps) {
